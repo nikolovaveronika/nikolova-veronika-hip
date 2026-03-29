@@ -1,0 +1,148 @@
+//SERVER
+
+import java.io.BufferedReader; // used to read text from input stream (client messages)
+import java.io.IOException; // handles input/output errors
+import java.io.InputStreamReader; // converts byte stream to character stream
+import java.io.PrintWriter; // used to send text output to client
+import java.net.ServerSocket; // creates server that listens for connections
+import java.net.Socket; // represents a connection to a client
+
+public class Server { // main server class
+
+    private static final int PORT = 8080; // server will listen on port 8080
+
+    public static void main(String[] args) { // program entry point
+        System.out.println("Server started on port " + PORT); // print server start message
+
+        try (ServerSocket serverSocket = new ServerSocket(PORT)) { // create server socket and auto-close it later
+
+            while (true) { // infinite loop → server keeps running forever
+
+                Socket clientSocket = serverSocket.accept(); // WAIT here until a client connects, then accept it
+                System.out.println("Client connected"); // print when client connects
+
+                new Thread(() -> handleClient(clientSocket)).start(); // create new thread for each client
+                // lambda passes clientSocket into handleClient method
+            }
+
+        } catch (IOException e) { // catches server errors
+            System.out.println("Server error: " + e.getMessage()); // print error message
+        }
+    }
+
+    private static void handleClient(Socket socket) { // handles communication with ONE client
+        try (
+                BufferedReader in = new BufferedReader( // input reader for client messages
+                        new InputStreamReader(socket.getInputStream())); // gets input stream from socket
+
+                PrintWriter out = new PrintWriter( // output writer to send messages to client
+                        socket.getOutputStream(), true); // true = auto-flush after println
+        ) {
+            String input; // stores incoming message from client
+
+            while ((input = in.readLine()) != null) { // read message line-by-line until client disconnects
+
+                input = input.trim(); // remove spaces from input
+
+                int number; // variable to store parsed integer
+
+                try {
+                    number = Integer.parseInt(input); // convert string to integer
+                } catch (NumberFormatException e) { // if input is not a valid number
+                    out.println("ERROR: Invalid number"); // send error back to client
+                    continue; // skip to next message
+                }
+
+                PrimeTask task = new PrimeTask(number, out); // create task to check if number is prime
+                new Thread(task).start(); // run prime check in a NEW thread (parallel execution)
+            }
+
+        } catch (IOException e) { // handles client communication errors
+            System.out.println("Client error: " + e.getMessage()); // print error
+        } finally { // always runs when client disconnects or error happens
+            try {
+                socket.close(); // close connection with client
+                System.out.println("Client disconnected"); // log disconnect
+            } catch (IOException ignored) {} // ignore errors when closing socket
+        }
+    }
+}
+
+//CLIENT
+
+import java.io.BufferedReader; // reads response from server
+import java.io.InputStreamReader; // converts bytes to characters
+import java.io.PrintWriter; // sends messages to server
+import java.net.Socket; // creates connection to server
+
+public class Client { // client program
+
+    public static void main(String[] args) throws Exception { // main method, can throw exceptions
+
+        Socket socket = new Socket("localhost", 8080); // connect to server on same machine, port 8080
+
+        BufferedReader in = new BufferedReader( // input stream from server
+                new InputStreamReader(socket.getInputStream())); // convert stream to readable text
+
+        PrintWriter out = new PrintWriter( // output stream to server
+                socket.getOutputStream(), true); // auto-flush enabled
+
+        out.println("17"); // send number 17 to server
+        System.out.println(in.readLine()); // print server response for 17
+
+        out.println("100"); // send number 100 to server
+        System.out.println(in.readLine()); // print server response for 100
+
+        socket.close(); // close connection to server
+    }
+}
+
+//PRIME TASK-thread worker
+
+import java.io.PrintWriter; // used to send result back to client
+
+public class PrimeTask implements Runnable { // Runnable = task that runs in a thread
+
+    private final int number; // number we will check if prime
+    private final PrintWriter out; // output stream to client
+
+    public PrimeTask(int number, PrintWriter out) { // constructor
+        this.number = number; // store number
+        this.out = out; // store output stream
+    }
+
+    @Override
+    public void run() { // code executed when thread starts
+
+        String threadName = Thread.currentThread().getName(); // get name of current thread
+        System.out.println(threadName + ": Checking if " + number + " is prime"); // log start
+
+        String result = checkPrime(number); // compute if number is prime
+
+        System.out.println(threadName + ": " + result); // print result in console
+        out.println(result); // send result back to client
+    }
+
+    private String checkPrime(int n) { // method that checks primality
+
+        if (n <= 1) { // numbers <= 1 are not prime
+            return "NOT PRIME (must be > 1)";
+        }
+
+        if (n == 2) { // 2 is the only even prime number
+            return "PRIME";
+        }
+
+        if (n % 2 == 0) { // other even numbers are not prime
+            return "NOT PRIME - divisible by 2";
+        }
+
+        for (int i = 3; (long)i * i <= n; i += 2) { // check odd divisors only
+            if (n % i == 0) { // if divisible → not prime
+                return "NOT PRIME - divisible by " + i;
+            }
+        }
+
+        return "PRIME"; // no divisors found → number is prime
+    }
+}
