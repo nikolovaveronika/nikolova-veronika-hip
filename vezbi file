@@ -1,0 +1,69 @@
+//reads a text file and writes its content to another file while adding line numbers to each line
+
+import java.io.*; 
+// imports all file-related classes: BufferedReader, FileReader, FileWriter, IOException, FileNotFoundException
+
+public class LineNumberer { 
+    // defines a class called LineNumberer
+
+    public static void main(String[] args) { 
+        // main method = program starts here
+
+        if (args.length != 2) { 
+            // checks if user provided exactly 2 command-line arguments
+            // args[0] = input file, args[1] = output file
+
+            System.out.println("Line Numberer"); 
+            // prints simple usage message if arguments are missing
+
+            return; 
+            // stops program immediately
+        }
+
+        String inputFile = args[0]; 
+        // first argument = name/path of input file
+
+        String outputFile = args[1]; 
+        // second argument = name/path of output file
+
+        try (
+            BufferedReader reader = new BufferedReader(new FileReader(inputFile)); 
+            // opens input file for reading line by line
+
+            FileWriter writer = new FileWriter(outputFile)
+            // opens output file for writing (overwrites if exists)
+        ) {
+
+            String line; 
+            // stores each line read from file
+
+            int lineNumber = 1; 
+            // counter to number each line starting from 1
+
+            while ((line = reader.readLine()) != null) { 
+                // reads file line by line until end (null = no more lines)
+
+                writer.write(lineNumber + ": " + line + System.lineSeparator()); 
+                // writes: line number + ":" + original line + new line break
+
+                lineNumber++; 
+                // increases line number for next line
+            }
+
+            System.out.println("File is numbered and written to file " + outputFile); 
+            // success message after processing is done
+
+        } catch (FileNotFoundException e) { 
+            // runs if input file does not exist
+
+            System.out.println("Error file not found."); 
+            // user-friendly error message
+
+        } catch (IOException e) { 
+            // runs if any reading/writing error happens
+
+            System.out.println("Error not able to read or write file"); 
+            // general IO error message
+        }
+    }
+}
