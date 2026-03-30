@@ -1,0 +1,135 @@
+import java.net.*;
+import java.io.*;
+
+public class Server {
+
+    private static final int SERVER_PORT = 8080;
+
+    public static void main(String[] args) {
+
+        ServerSocket serverSocket = null;
+        Socket clientSocket = null;
+        PrintWriter outputToClient = null;
+        BufferedReader inputFromClient = null;
+
+        try {
+            System.out.println("Starting server on port " + SERVER_PORT + "...");
+            serverSocket = new ServerSocket(SERVER_PORT);
+            System.out.println("Server is running and waiting for client...");
+
+            // wait for ONE client
+            clientSocket = serverSocket.accept();
+            System.out.println("Client connected: " + clientSocket.getInetAddress());
+
+            // streams
+            outputToClient = new PrintWriter(new OutputStreamWriter(clientSocket.getOutputStream()), true);
+            inputFromClient = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+
+            // optional greeting
+            String greeting = inputFromClient.readLine();
+            System.out.println("Client says: " + greeting);
+            outputToClient.println("Send me a number and I will check if it's prime.");
+
+            // receive number
+            int number = Integer.parseInt(inputFromClient.readLine());
+            System.out.println("Received number: " + number);
+
+            // PRIME CHECK
+            String result = checkPrime(number);
+
+            // send result
+            outputToClient.println(result);
+            System.out.println("Sent result: " + result);
+
+        } catch (IOException e) {
+            System.err.println("Server error: " + e.getMessage());
+        } catch (NumberFormatException e) {
+            System.err.println("Invalid number format: " + e.getMessage());
+        } finally {
+            try {
+                if (outputToClient != null) outputToClient.close();
+                if (inputFromClient != null) inputFromClient.close();
+                if (clientSocket != null) clientSocket.close();
+                if (serverSocket != null) serverSocket.close();
+                System.out.println("Server closed.");
+            } catch (IOException e) {
+                System.err.println("Error closing resources: " + e.getMessage());
+            }
+        }
+    }
+
+    // PRIME LOGIC
+    private static String checkPrime(int n) {
+
+        if (n <= 1) return "NOT PRIME";
+        if (n == 2) return "PRIME";
+        if (n % 2 == 0) return "NOT PRIME";
+
+        for (int i = 3; i * i <= n; i += 2) {
+            if (n % i == 0) {
+                return "NOT PRIME (divisible by " + i + ")";
+            }
+        }
+
+        return "PRIME";
+    }
+}
+
+/////client
+
+import java.io.*;
+import java.net.*;
+
+public class Client {
+
+    private static final String SERVER_ADDRESS = "localhost";
+    private static final int SERVER_PORT = 8080;
+
+    public static void main(String[] args) {
+
+        Socket socket = null;
+        PrintWriter outputToServer = null;
+        BufferedReader inputFromServer = null;
+        BufferedReader userInput = null;
+
+        try {
+            System.out.println("Connecting to server...");
+            socket = new Socket(SERVER_ADDRESS, SERVER_PORT);
+            System.out.println("Connected!");
+
+            outputToServer = new PrintWriter(new OutputStreamWriter(socket.getOutputStream()), true);
+            inputFromServer = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            userInput = new BufferedReader(new InputStreamReader(System.in));
+
+            // send greeting
+            outputToServer.println("Hello server");
+
+            // server response
+            System.out.println("Server: " + inputFromServer.readLine());
+
+            // ask user for number
+            System.out.print("Enter a number: ");
+            String number = userInput.readLine();
+
+            // send number
+            outputToServer.println(number);
+
+            // receive result
+            String result = inputFromServer.readLine();
+            System.out.println("Result: " + result);
+
+        } catch (IOException e) {
+            System.err.println("Error: " + e.getMessage());
+        } finally {
+            try {
+                if (outputToServer != null) outputToServer.close();
+                if (inputFromServer != null) inputFromServer.close();
+                if (userInput != null) userInput.close();
+                if (socket != null) socket.close();
+                System.out.println("Client closed.");
+            } catch (IOException e) {
+                System.err.println("Error closing: " + e.getMessage());
+            }
+        }
+    }
+}
