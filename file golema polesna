@@ -1,0 +1,188 @@
+import java.io.*;
+import java.util.*;
+
+// Simple console-based file task manager
+public class FileTaskManager {
+
+    public static void main(String[] args) {
+
+        Scanner scanner = new Scanner(System.in); 
+        // reads user input from keyboard
+
+        String fileName = "tasks.txt"; 
+        // file where tasks are stored
+
+        while (true) { 
+            // infinite loop until user types exit
+
+            System.out.print("Command: "); 
+            String input = scanner.nextLine().trim(); 
+            // read full command line
+
+            if (input.equalsIgnoreCase("exit")) {
+                // stop program
+                break;
+            }
+
+            String[] parts = input.split(" ", 2); 
+            // split into command + argument
+
+            String command = parts[0].toLowerCase(); 
+            // first word = command
+
+            switch (command) {
+
+                // ================= ADD TASK =================
+                case "add":
+
+                    if (parts.length < 2) {
+                        System.out.println("Error: No task provided");
+                        break;
+                    }
+
+                    try (FileWriter writer = new FileWriter(fileName, true)) {
+                        // append mode = true
+
+                        writer.write(parts[1] + System.lineSeparator());
+                        // write task into file
+
+                        System.out.println("Task added");
+
+                    } catch (IOException e) {
+                        System.out.println("Error writing to file");
+                    }
+
+                    break;
+
+                // ================= VIEW TASKS =================
+                case "view":
+
+                    File file = new File(fileName);
+                    // file object
+
+                    if (!file.exists() || file.length() == 0) {
+                        // file missing or empty
+                        System.out.println("No tasks found");
+                        break;
+                    }
+
+                    System.out.println("TASK LIST:");
+
+                    try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+
+                        String line;
+                        int number = 1;
+
+                        while ((line = reader.readLine()) != null) {
+                            // read line by line
+
+                            System.out.println(number + ". " + line);
+                            number++;
+                        }
+
+                    } catch (IOException e) {
+                        System.out.println("Error reading file");
+                    }
+
+                    break;
+
+                // ================= CLEAR FILE =================
+                case "clear":
+
+                    try (FileWriter writer = new FileWriter(fileName)) {
+                        // overwrite file with nothing (clears it)
+
+                        System.out.println("All tasks cleared");
+
+                    } catch (IOException e) {
+                        System.out.println("Error clearing file");
+                    }
+
+                    break;
+
+                // ================= SEARCH TASK =================
+                case "search":
+
+                    if (parts.length < 2) {
+                        System.out.println("Error: No search word provided");
+                        break;
+                    }
+
+                    try (BufferedReader reader = new BufferedReader(new FileReader(fileName))) {
+
+                        String line;
+                        boolean found = false;
+
+                        while ((line = reader.readLine()) != null) {
+
+                            if (line.toLowerCase().contains(parts[1].toLowerCase())) {
+                                // case-insensitive search
+                                System.out.println(line);
+                                found = true;
+                            }
+                        }
+
+                        if (!found) {
+                            System.out.println("No matching tasks found");
+                        }
+
+                    } catch (IOException e) {
+                        System.out.println("Error reading file");
+                    }
+
+                    break;
+
+                // ================= DELETE TASK =================
+                case "delete":
+
+                    if (parts.length < 2) {
+                        System.out.println("Error: No number provided");
+                        break;
+                    }
+
+                    int deleteIndex = Integer.parseInt(parts[1]);
+
+                    List<String> tasks = new ArrayList<>();
+
+                    try (BufferedReader reader = new BufferedReader(new FileReader(fileName))) {
+
+                        String line;
+                        while ((line = reader.readLine()) != null) {
+                            tasks.add(line);
+                        }
+
+                    } catch (IOException e) {
+                        System.out.println("Error reading file");
+                        break;
+                    }
+
+                    if (deleteIndex < 1 || deleteIndex > tasks.size()) {
+                        System.out.println("Invalid task number");
+                        break;
+                    }
+
+                    tasks.remove(deleteIndex - 1);
+
+                    try (FileWriter writer = new FileWriter(fileName)) {
+                        for (String task : tasks) {
+                            writer.write(task + System.lineSeparator());
+                        }
+
+                        System.out.println("Task deleted");
+
+                    } catch (IOException e) {
+                        System.out.println("Error writing file");
+                    }
+
+                    break;
+
+                // ================= UNKNOWN COMMAND =================
+                default:
+                    System.out.println("Unknown command");
+            }
+        }
+
+        scanner.close(); 
+        // close scanner
+    }
+}
