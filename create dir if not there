@@ -1,0 +1,6 @@
+Path dir = Paths.get("newFolder");
+
+if (!Files.exists(dir)) {
+    Files.createDirectory(dir);
+    System.out.println("Directory created.");
+}
