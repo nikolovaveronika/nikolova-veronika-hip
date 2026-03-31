@@ -1,0 +1,13 @@
+Files.walkFileTree(Paths.get("Class1/src"), new SimpleFileVisitor<>() {
+    @Override
+    public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+        long daysOld = (System.currentTimeMillis() - attrs.lastModifiedTime().toMillis()) / (1000 * 60 * 60 * 24);
+
+        if (daysOld > 7) {
+            Files.delete(file);
+            System.out.println("Deleted: " + file);
+        }
+
+        return FileVisitResult.CONTINUE;
+    }
+});
