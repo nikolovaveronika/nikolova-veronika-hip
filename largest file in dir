@@ -1,0 +1,18 @@
+Path dir = Paths.get("Class1/src");
+
+try (Stream<Path> files = Files.list(dir)) {
+    Path largest = files
+            .filter(Files::isRegularFile)
+            .max((f1, f2) -> {
+                try {
+                    return Long.compare(Files.size(f1), Files.size(f2));
+                } catch (IOException e) {
+                    return 0;
+                }
+            })
+            .orElse(null);
+
+    System.out.println("Largest file: " + largest);
+} catch (IOException e) {
+    e.printStackTrace();
+}
