@@ -1,0 +1,10 @@
+Path source = Paths.get("input.txt");
+Path target = Paths.get("output.txt");
+
+try {
+    byte[] data = Files.readAllBytes(source);
+    Files.write(target, data);
+    System.out.println("File copied successfully.");
+} catch (IOException e) {
+    e.printStackTrace();
+}
