@@ -1,0 +1,14 @@
+int count = 0;
+
+try (DirectoryStream<Path> stream =
+             Files.newDirectoryStream(Paths.get("Class1/src"), "*.txt")) {
+
+    for (Path p : stream) {
+        count++;
+    }
+
+    System.out.println("Number of .txt files: " + count);
+
+} catch (IOException e) {
+    e.printStackTrace();
+}
