@@ -1,0 +1,6 @@
+List<String> file1 = Files.readAllLines(Paths.get("a.txt"));
+List<String> file2 = Files.readAllLines(Paths.get("b.txt"));
+
+boolean same = file1.equals(file2);
+
+System.out.println("Same content: " + same);
