@@ -1,0 +1,219 @@
+import java.io.IOException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.Arrays;
+import java.util.stream.Stream;
+
+public class SmartFileManager {
+
+    public static void main(String[] args) {
+
+        // check if enough arguments were passed
+        if (args.length < 2) {
+            System.out.println("Usage: java SmartFileManager <command> <args>");
+            return;
+        }
+
+        String command = args[0]; // first argument = command
+
+        try {
+            switch (command) {
+
+                case "info":
+                    info(args[1]); // call info method
+                    break;
+
+                case "list":
+                    list(args[1], args[2]); // directory + extension
+                    break;
+
+                case "count":
+                    count(args[1]); // directory
+                    break;
+
+                case "largest":
+                    largest(args[1]); // directory
+                    break;
+
+                case "compare":
+                    compare(args[1], args[2]); // file1 + file2
+                    break;
+
+                case "dns":
+                    dns(args[1]); // domain
+                    break;
+
+                case "recent":
+                    recent(args[1], Integer.parseInt(args[2])); // directory + days
+                    break;
+
+                default:
+                    System.out.println("Unknown command"); // invalid command
+            }
+
+        } catch (Exception e) {
+            System.out.println("Error: " + e.getMessage()); // global error handling
+        }
+    }
+
+    // 1. FILE INFO COMMAND
+    public static void info(String fileName) throws IOException {
+
+        Path path = Paths.get(fileName); // convert string to Path
+
+        if (!Files.exists(path)) { // check if file exists
+            System.out.println("File does not exist.");
+            return;
+        }
+
+        // read file metadata (size, dates, etc.)
+        BasicFileAttributes attr = Files.readAttributes(path, BasicFileAttributes.class);
+
+        System.out.println("Name: " + path.getFileName()); // file name only
+        System.out.println("Absolute Path: " + path.toAbsolutePath()); // full path
+        System.out.println("Size: " + attr.size() + " bytes"); // file size
+
+        // check type
+        if (attr.isDirectory()) {
+            System.out.println("Type: Directory");
+        } else {
+            System.out.println("Type: File");
+        }
+
+        System.out.println("Last Modified: " + attr.lastModifiedTime()); // last edit time
+
+        // permissions
+        System.out.println("Readable: " + Files.isReadable(path));
+        System.out.println("Writable: " + Files.isWritable(path));
+        System.out.println("Executable: " + Files.isExecutable(path));
+    }
+
+    // 2. LIST FILES BY EXTENSION
+    public static void list(String directory, String extension) throws IOException {
+
+        Path dir = Paths.get(directory); // directory path
+
+        // filter files by extension
+        try (DirectoryStream<Path> stream =
+                     Files.newDirectoryStream(dir, "*" + extension)) {
+
+            for (Path p : stream) {
+                System.out.println(p.getFileName()); // print file name only
+            }
+        }
+    }
+
+    // 3. COUNT FILES + DIRECTORIES
+    public static void count(String directory) throws IOException {
+
+        Path dir = Paths.get(directory); // directory path
+
+        int files = 0;     // counter for files
+        int folders = 0;   // counter for directories
+
+        try (Stream<Path> stream = Files.list(dir)) {
+
+            for (Path p : (Iterable<Path>) stream::iterator) {
+
+                if (Files.isDirectory(p)) {
+                    folders++; // increase folder count
+                } else {
+                    files++; // increase file count
+                }
+            }
+        }
+
+        // print results
+        System.out.println("Files: " + files);
+        System.out.println("Directories: " + folders);
+    }
+
+    // 4. FIND LARGEST FILE
+    public static void largest(String directory) throws IOException {
+
+        Path dir = Paths.get(directory); // directory path
+
+        Path largestFile = null; // store biggest file
+        long maxSize = 0; // store max size
+
+        try (Stream<Path> stream = Files.list(dir)) {
+
+            for (Path p : (Iterable<Path>) stream::iterator) {
+
+                if (Files.isRegularFile(p)) { // only files, not folders
+
+                    long size = Files.size(p); // get file size
+
+                    if (size > maxSize) { // compare sizes
+                        maxSize = size;
+                        largestFile = p; // update largest
+                    }
+                }
+            }
+        }
+
+        // print result
+        if (largestFile != null) {
+            System.out.println("Largest file: " + largestFile.getFileName());
+            System.out.println("Size: " + maxSize + " bytes");
+        }
+    }
+
+    // 5. COMPARE TWO FILES (BYTE BY BYTE)
+    public static void compare(String file1, String file2) throws IOException {
+
+        Path p1 = Paths.get(file1); // first file
+        Path p2 = Paths.get(file2); // second file
+
+        byte[] b1 = Files.readAllBytes(p1); // read file 1
+        byte[] b2 = Files.readAllBytes(p2); // read file 2
+
+        boolean same = Arrays.equals(b1, b2); // compare arrays
+
+        System.out.println("Files are identical: " + same);
+    }
+
+    // 6. DNS LOOKUP
+    public static void dns(String domain) throws UnknownHostException {
+
+        InetAddress[] addresses = InetAddress.getAllByName(domain); // resolve domain
+
+        System.out.println("IP addresses for " + domain + ":");
+
+        for (InetAddress ip : addresses) {
+            System.out.println(ip.getHostAddress()); // print IP
+        }
+    }
+
+    // 7. RECENT FILES (LAST X DAYS)
+    public static void recent(String directory, int days) throws IOException {
+
+        Path dir = Paths.get(directory); // directory path
+
+        Files.walkFileTree(dir, new SimpleFileVisitor<>() {
+
+            @Override
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
+
+                // convert last modified time to LocalDate
+                LocalDate modified = attrs.lastModifiedTime()
+                        .toInstant()
+                        .atZone(ZoneId.systemDefault())
+                        .toLocalDate();
+
+                LocalDate now = LocalDate.now(); // current date
+
+                // check if file is within last X days
+                if (modified.isAfter(now.minusDays(days))) {
+                    System.out.println(file); // print file path
+                }
+
+                return FileVisitResult.CONTINUE; // continue scanning
+            }
+        });
+    }
+}
