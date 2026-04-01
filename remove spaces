@@ -1,0 +1,71 @@
+import java.io.*;
+import java.net.*;
+
+/**
+ * Server: Removes spaces from a string
+ */
+class ServerRemoveSpaces {
+    private static final int PORT = 8080;
+
+    public static void main(String[] args) {
+        String clientMessage;
+        String result;
+
+        try {
+            ServerSocket serverSocket = new ServerSocket(PORT);
+
+            while (true) {
+                Socket connectionSocket = serverSocket.accept();
+
+                BufferedReader fromClient = new BufferedReader(
+                        new InputStreamReader(connectionSocket.getInputStream()));
+
+                DataOutputStream toClient = new DataOutputStream(
+                        connectionSocket.getOutputStream());
+
+                clientMessage = fromClient.readLine(); // read text
+
+                result = clientMessage.replace(" ", "") + '\n'; // remove spaces
+
+                toClient.writeBytes(result); // send result
+
+                connectionSocket.close();
+            }
+
+        } catch (IOException e) {
+            System.err.println(e.getMessage());
+        }
+    }
+}
+
+//client
+
+import java.io.*;
+import java.net.*;
+
+class ClientRemoveSpaces {
+    public static void main(String[] args) throws Exception {
+        String message, response;
+
+        BufferedReader userInput = new BufferedReader(
+                new InputStreamReader(System.in));
+
+        Socket socket = new Socket("127.0.0.1", 8080);
+
+        DataOutputStream toServer = new DataOutputStream(
+                socket.getOutputStream());
+
+        BufferedReader fromServer = new BufferedReader(
+                new InputStreamReader(socket.getInputStream()));
+
+        System.out.print("Enter text: ");
+        message = userInput.readLine();
+
+        toServer.writeBytes(message + '\n'); // send
+
+        response = fromServer.readLine(); // receive
+        System.out.println("Without spaces: " + response);
+
+        socket.close();
+    }
+}
