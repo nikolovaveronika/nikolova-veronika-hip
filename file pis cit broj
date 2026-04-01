@@ -1,0 +1,103 @@
+import java.io.IOException;
+import java.nio.file.*;
+import java.util.List;
+import java.util.Scanner;
+
+public class FileNotesManager {
+
+    static Path filePath = Paths.get("notes.txt");
+    static Scanner scanner = new Scanner(System.in);
+
+    public static void main(String[] args) {
+
+        while (true) {
+            System.out.println("\n--- MENU ---");
+            System.out.println("1. Write to file");
+            System.out.println("2. Read file");
+            System.out.println("3. Count lines");
+            System.out.println("4. Exit");
+            System.out.print("Choose: ");
+
+            int choice = scanner.nextInt();
+            scanner.nextLine(); // consume newline
+
+            switch (choice) {
+                case 1:
+                    writeToFile();
+                    break;
+
+                case 2:
+                    readFile();
+                    break;
+
+                case 3:
+                    countLines();
+                    break;
+
+                case 4:
+                    System.out.println("Exiting...");
+                    return;
+
+                default:
+                    System.out.println("Invalid choice!");
+            }
+        }
+    }
+
+    // 1. WRITE TO FILE
+    public static void writeToFile() {
+        try {
+            System.out.print("Enter text: ");
+            String text = scanner.nextLine();
+
+            // append mode
+            Files.write(
+                    filePath,
+                    (text + System.lineSeparator()).getBytes(),
+                    StandardOpenOption.CREATE,
+                    StandardOpenOption.APPEND
+            );
+
+            System.out.println("Saved to file.");
+
+        } catch (IOException e) {
+            System.out.println("Error writing to file!");
+        }
+    }
+
+    // 2. READ FILE
+    public static void readFile() {
+        try {
+            if (!Files.exists(filePath)) {
+                System.out.println("File does not exist.");
+                return;
+            }
+
+            List<String> lines = Files.readAllLines(filePath);
+
+            System.out.println("\n--- FILE CONTENT ---");
+            for (String line : lines) {
+                System.out.println(line);
+            }
+
+        } catch (IOException e) {
+            System.out.println("Error reading file!");
+        }
+    }
+
+    // 3. COUNT LINES
+    public static void countLines() {
+        try {
+            if (!Files.exists(filePath)) {
+                System.out.println("File does not exist.");
+                return;
+            }
+
+            List<String> lines = Files.readAllLines(filePath);
+            System.out.println("Total lines: " + lines.size());
+
+        } catch (IOException e) {
+            System.out.println("Error counting lines!");
+        }
+    }
+}
