@@ -1,0 +1,130 @@
+import java.io.*;
+import java.net.*;
+import java.util.ArrayList; // dynamic list
+
+/**
+ * Server: Receives array and returns only even numbers
+ */
+class ServerEvenArray {
+    private static final int PORT = 8080;
+
+    public static void main(String[] args) {
+        ServerSocket serverSocket = null;
+
+        try {
+            serverSocket = new ServerSocket(PORT); // create server
+            System.out.println("Server started...");
+
+            while (true) { // run forever
+                Socket clientSocket = serverSocket.accept(); // wait for client
+                System.out.println("Client connected");
+
+                // handle each client in new thread
+                new Thread(() -> handleClient(clientSocket)).start();
+            }
+
+        } catch (IOException e) {
+            System.err.println(e.getMessage());
+        }
+    }
+
+    private static void handleClient(Socket socket) {
+        try {
+            ObjectInputStream in = new ObjectInputStream(socket.getInputStream()); // receive data
+            ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream()); // send data
+
+            int size = in.readInt(); // read array size
+
+            int[] arr = new int[size]; // create array
+
+            for (int i = 0; i < size; i++) {
+                arr[i] = in.readInt(); // read each element
+            }
+
+            // PROCESS: keep only even numbers
+            ArrayList<Integer> evens = new ArrayList<>(); // dynamic list
+
+            for (int num : arr) {
+                if (num % 2 == 0) { // check if even
+                    evens.add(num); // add to list
+                }
+            }
+
+            // send result size first
+            out.writeInt(evens.size());
+
+            // send even numbers
+            for (int num : evens) {
+                out.writeInt(num);
+            }
+
+            out.flush(); // ensure sending
+
+            socket.close(); // close connection
+
+        } catch (IOException e) {
+            System.err.println(e.getMessage());
+        }
+    }
+}
+
+//client
+
+import java.io.*;
+import java.net.*;
+import java.util.Scanner;
+
+/**
+ * Client: Sends array and receives only even numbers
+ */
+class ClientEvenArray {
+    public static void main(String[] args) {
+        Socket socket = null;
+
+        try {
+            socket = new Socket("127.0.0.1", 8080); // connect to server
+
+            ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream()); // send
+            ObjectInputStream in = new ObjectInputStream(socket.getInputStream()); // receive
+
+            Scanner scanner = new Scanner(System.in);
+
+            System.out.print("Enter array size: ");
+            int size = scanner.nextInt();
+
+            int[] arr = new int[size];
+
+            System.out.println("Enter elements:");
+            for (int i = 0; i < size; i++) {
+                arr[i] = scanner.nextInt(); // read input
+            }
+
+            out.writeInt(size); // send size
+
+            for (int i = 0; i < size; i++) {
+                out.writeInt(arr[i]); // send elements
+            }
+
+            out.flush();
+
+            // receive even numbers
+            int newSize = in.readInt(); // receive result size
+            int[] evens = new int[newSize];
+
+            for (int i = 0; i < newSize; i++) {
+                evens[i] = in.readInt(); // receive each even number
+            }
+
+            // print result
+            System.out.print("Even numbers: ");
+            for (int num : evens) {
+                System.out.print(num + " ");
+            }
+
+            socket.close();
+
+        } catch (IOException e) {
+            System.err.println(e.getMessage());
+        }
+    }
+}
