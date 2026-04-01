@@ -1,0 +1,138 @@
+import java.io.IOException;
+import java.nio.file.*;
+import java.util.List;
+import java.util.Scanner;
+
+public class StudentManager {
+
+    static Path filePath = Paths.get("students.txt");
+    static Scanner scanner = new Scanner(System.in);
+
+    public static void main(String[] args) {
+
+        while (true) {
+            System.out.println("\n--- STUDENT MENU ---");
+            System.out.println("1. Add student");
+            System.out.println("2. Show all students");
+            System.out.println("3. Search student by name");
+            System.out.println("4. Count students");
+            System.out.println("5. Exit");
+            System.out.print("Choose: ");
+
+            int choice = scanner.nextInt();
+            scanner.nextLine();
+
+            switch (choice) {
+                case 1 -> addStudent();
+                case 2 -> showAllStudents();
+                case 3 -> searchStudent();
+                case 4 -> countStudents();
+                case 5 -> {
+                    System.out.println("Goodbye!");
+                    return;
+                }
+                default -> System.out.println("Invalid choice");
+            }
+        }
+    }
+
+    // 1. ADD STUDENT
+    public static void addStudent() {
+        try {
+            System.out.print("Enter name: ");
+            String name = scanner.nextLine();
+
+            System.out.print("Enter age: ");
+            int age = scanner.nextInt();
+
+            System.out.print("Enter grade: ");
+            int grade = scanner.nextInt();
+            scanner.nextLine();
+
+            String record = name + "," + age + "," + grade + System.lineSeparator();
+
+            Files.write(
+                    filePath,
+                    record.getBytes(),
+                    StandardOpenOption.CREATE,
+                    StandardOpenOption.APPEND
+            );
+
+            System.out.println("Student added!");
+
+        } catch (IOException e) {
+            System.out.println("Error writing file!");
+        }
+    }
+
+    // 2. SHOW ALL STUDENTS
+    public static void showAllStudents() {
+        try {
+            if (!Files.exists(filePath)) {
+                System.out.println("No file found.");
+                return;
+            }
+
+            List<String> lines = Files.readAllLines(filePath);
+
+            System.out.println("\n--- STUDENT LIST ---");
+            for (String line : lines) {
+                System.out.println(line);
+            }
+
+        } catch (IOException e) {
+            System.out.println("Error reading file!");
+        }
+    }
+
+    // 3. SEARCH STUDENT
+    public static void searchStudent() {
+        try {
+            if (!Files.exists(filePath)) {
+                System.out.println("No file found.");
+                return;
+            }
+
+            System.out.print("Enter name to search: ");
+            String search = scanner.nextLine();
+
+            List<String> lines = Files.readAllLines(filePath);
+
+            boolean found = false;
+
+            for (String line : lines) {
+                String[] parts = line.split(",");
+
+                String name = parts[0];
+
+                if (name.equalsIgnoreCase(search)) {
+                    System.out.println("Found: " + line);
+                    found = true;
+                }
+            }
+
+            if (!found) {
+                System.out.println("Student not found.");
+            }
+
+        } catch (IOException e) {
+            System.out.println("Error searching file!");
+        }
+    }
+
+    // 4. COUNT STUDENTS
+    public static void countStudents() {
+        try {
+            if (!Files.exists(filePath)) {
+                System.out.println("Total students: 0");
+                return;
+            }
+
+            List<String> lines = Files.readAllLines(filePath);
+            System.out.println("Total students: " + lines.size());
+
+        } catch (IOException e) {
+            System.out.println("Error counting students!");
+        }
+    }
+}
