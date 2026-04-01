@@ -1,0 +1,72 @@
+import java.io.*;
+import java.net.*;
+
+/**
+ * Server: Counts words in a string
+ */
+class ServerWords {
+    private static final int PORT = 8080;
+
+    public static void main(String[] args) {
+        String clientMessage;
+        int wordCount;
+
+        try {
+            ServerSocket serverSocket = new ServerSocket(PORT);
+
+            while (true) {
+                Socket connectionSocket = serverSocket.accept();
+
+                BufferedReader fromClient = new BufferedReader(
+                        new InputStreamReader(connectionSocket.getInputStream()));
+
+                DataOutputStream toClient = new DataOutputStream(
+                        connectionSocket.getOutputStream());
+
+                clientMessage = fromClient.readLine(); // read sentence
+
+                String[] words = clientMessage.trim().split("\\s+"); // split by spaces
+                wordCount = words.length; // count words
+
+                toClient.writeBytes(wordCount + "\n"); // send result
+
+                connectionSocket.close();
+            }
+
+        } catch (IOException e) {
+            System.err.println(e.getMessage());
+        }
+    }
+}
+
+//client
+
+import java.io.*;
+import java.net.*;
+
+class ClientWords {
+    public static void main(String[] args) throws Exception {
+        String message, response;
+
+        BufferedReader userInput = new BufferedReader(
+                new InputStreamReader(System.in)); // keyboard
+
+        Socket socket = new Socket("127.0.0.1", 8080); // connect
+
+        DataOutputStream toServer = new DataOutputStream(
+                socket.getOutputStream()); // send
+
+        BufferedReader fromServer = new BufferedReader(
+                new InputStreamReader(socket.getInputStream())); // receive
+
+        System.out.print("Enter sentence: ");
+        message = userInput.readLine();
+
+        toServer.writeBytes(message + '\n'); // send
+
+        response = fromServer.readLine(); // receive
+        System.out.println("Word count: " + response);
+
+        socket.close();
+    }
+}
