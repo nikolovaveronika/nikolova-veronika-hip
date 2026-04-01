@@ -1,0 +1,177 @@
+import java.io.*;
+import java.net.*;
+import java.util.Arrays; // for sorting
+
+/**
+ * Server: Receives array, sorts it, finds min and max
+ */
+class ServerCombined {
+    private static final int PORT = 8080; // server port
+
+    public static void main(String[] args) {
+        ServerSocket serverSocket = null;
+
+        try {
+            serverSocket = new ServerSocket(PORT); // create server
+            System.out.println("Server started...");
+            System.out.println("Waiting for clients...");
+
+            while (true) { // run forever
+                Socket clientSocket = serverSocket.accept(); // accept client
+                System.out.println("Client connected: " + clientSocket.getInetAddress());
+
+                // handle client in new thread
+                new Thread(() -> handleClient(clientSocket)).start();
+            }
+
+        } catch (IOException e) {
+            System.err.println("Server error: " + e.getMessage());
+        }
+    }
+
+    private static void handleClient(Socket socket) {
+        try {
+            ObjectInputStream fromClient = new ObjectInputStream(
+                    socket.getInputStream()); // receive data
+
+            ObjectOutputStream toClient = new ObjectOutputStream(
+                    socket.getOutputStream()); // send data
+
+            int size = fromClient.readInt(); // read array size
+            System.out.println("Receiving array of size: " + size);
+
+            int[] arr = new int[size]; // create array
+
+            for (int i = 0; i < size; i++) {
+                arr[i] = fromClient.readInt(); // read elements
+            }
+
+            // print received array
+            System.out.print("Received array: ");
+            for (int num : arr) {
+                System.out.print(num + " ");
+            }
+            System.out.println();
+
+            // PROCESS 1: sort array
+            Arrays.sort(arr); // sort ascending
+
+            // PROCESS 2: find min and max
+            int min = arr[0]; // first element (after sorting)
+            int max = arr[arr.length - 1]; // last element
+
+            System.out.println("Min: " + min);
+            System.out.println("Max: " + max);
+
+            // SEND RESULTS
+
+            // send size of sorted array
+            toClient.writeInt(size);
+
+            // send sorted array
+            for (int i = 0; i < size; i++) {
+                toClient.writeInt(arr[i]);
+            }
+
+            // send min and max
+            toClient.writeInt(min);
+            toClient.writeInt(max);
+
+            toClient.flush(); // ensure data is sent
+
+            socket.close(); // close connection
+            System.out.println("Client disconnected\n");
+
+        } catch (IOException e) {
+            System.err.println("Error handling client: " + e.getMessage());
+        }
+    }
+}
+
+//client
+
+import java.io.*;
+import java.net.*;
+import java.util.Scanner;
+
+/**
+ * Client: Sends array and receives sorted array, min, and max
+ */
+class ClientCombined {
+    public static void main(String[] args) {
+        Socket socket = null;
+
+        try {
+            socket = new Socket("127.0.0.1", 8080); // connect to server
+            System.out.println("Connected to server!");
+
+            ObjectOutputStream toServer = new ObjectOutputStream(
+                    socket.getOutputStream()); // send data
+
+            ObjectInputStream fromServer = new ObjectInputStream(
+                    socket.getInputStream()); // receive data
+
+            Scanner scanner = new Scanner(System.in);
+
+            // get array size
+            System.out.print("Enter array size: ");
+            int size = scanner.nextInt();
+
+            int[] arr = new int[size];
+
+            // get elements
+            System.out.println("Enter elements:");
+            for (int i = 0; i < size; i++) {
+                arr[i] = scanner.nextInt();
+            }
+
+            // display original array
+            System.out.print("Original array: ");
+            for (int num : arr) {
+                System.out.print(num + " ");
+            }
+            System.out.println();
+
+            // SEND DATA
+
+            toServer.writeInt(size); // send size
+
+            for (int i = 0; i < size; i++) {
+                toServer.writeInt(arr[i]); // send elements
+            }
+
+            toServer.flush();
+
+            System.out.println("Data sent to server...");
+
+            // RECEIVE RESULTS
+
+            int newSize = fromServer.readInt(); // receive size
+
+            int[] sorted = new int[newSize];
+
+            for (int i = 0; i < newSize; i++) {
+                sorted[i] = fromServer.readInt(); // receive sorted array
+            }
+
+            int min = fromServer.readInt(); // receive min
+            int max = fromServer.readInt(); // receive max
+
+            // DISPLAY RESULTS
+
+            System.out.print("Sorted array: ");
+            for (int num : sorted) {
+                System.out.print(num + " ");
+            }
+            System.out.println();
+
+            System.out.println("Minimum: " + min);
+            System.out.println("Maximum: " + max);
+
+            socket.close(); // close connection
+
+        } catch (IOException e) {
+            System.err.println("Error: " + e.getMessage());
+        }
+    }
+}
