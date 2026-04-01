@@ -1,0 +1,78 @@
+import java.io.*;
+import java.net.*;
+
+/**
+ * Server: Counts vowels in a string
+ */
+class ServerVowels {
+    private static final int PORT = 8080;
+
+    public static void main(String[] args) {
+        String clientMessage;
+        int count; // number of vowels
+
+        try {
+            ServerSocket serverSocket = new ServerSocket(PORT); // create server
+
+            while (true) {
+                Socket connectionSocket = serverSocket.accept(); // accept client
+
+                BufferedReader fromClient = new BufferedReader(
+                        new InputStreamReader(connectionSocket.getInputStream())); // read input
+
+                DataOutputStream toClient = new DataOutputStream(
+                        connectionSocket.getOutputStream()); // send output
+
+                clientMessage = fromClient.readLine(); // read string
+                System.out.println("Received: " + clientMessage);
+
+                count = 0; // initialize counter
+
+                for (char c : clientMessage.toLowerCase().toCharArray()) { // loop characters
+                    if ("aeiou".indexOf(c) != -1) { // check if vowel
+                        count++; // increase counter
+                    }
+                }
+
+                toClient.writeBytes(count + "\n"); // send result
+
+                connectionSocket.close(); // close connection
+            }
+
+        } catch (IOException e) {
+            System.err.println(e.getMessage());
+        }
+    }
+}
+
+//client
+
+import java.io.*;
+import java.net.*;
+
+class ClientVowels {
+    public static void main(String[] args) throws Exception {
+        String message, response;
+
+        BufferedReader userInput = new BufferedReader(
+                new InputStreamReader(System.in)); // keyboard input
+
+        Socket socket = new Socket("127.0.0.1", 8080); // connect
+
+        DataOutputStream toServer = new DataOutputStream(
+                socket.getOutputStream()); // send
+
+        BufferedReader fromServer = new BufferedReader(
+                new InputStreamReader(socket.getInputStream())); // receive
+
+        System.out.print("Enter text: ");
+        message = userInput.readLine(); // read input
+
+        toServer.writeBytes(message + '\n'); // send to server
+
+        response = fromServer.readLine(); // receive result
+        System.out.println("Vowels count: " + response);
+
+        socket.close(); // close
+    }
+}
