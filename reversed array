@@ -1,0 +1,119 @@
+import java.io.*;
+import java.net.*;
+
+/**
+ * Server: Receives array and returns reversed array
+ */
+class ServerReverseArray {
+    private static final int PORT = 8080;
+
+    public static void main(String[] args) {
+        try {
+            ServerSocket serverSocket = new ServerSocket(PORT);
+
+            while (true) {
+                Socket socket = serverSocket.accept(); // accept client
+
+                new Thread(() -> handle(socket)).start(); // multi-client
+            }
+
+        } catch (IOException e) {
+            System.err.println(e.getMessage());
+        }
+    }
+
+    private static void handle(Socket socket) {
+        try {
+            ObjectInputStream in = new ObjectInputStream(socket.getInputStream()); // receive
+            ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream()); // send
+
+            int size = in.readInt(); // read size
+
+            int[] arr = new int[size];
+
+            for (int i = 0; i < size; i++) {
+                arr[i] = in.readInt(); // read elements
+            }
+
+            // PROCESS: reverse array
+            int[] reversed = new int[size];
+
+            for (int i = 0; i < size; i++) {
+                reversed[i] = arr[size - 1 - i]; // reverse logic
+            }
+
+            // send back reversed array
+            out.writeInt(size); // send size
+
+            for (int i = 0; i < size; i++) {
+                out.writeInt(reversed[i]); // send elements
+            }
+
+            out.flush();
+
+            socket.close();
+
+        } catch (IOException e) {
+            System.err.println(e.getMessage());
+        }
+    }
+}
+
+//client
+
+import java.io.*;
+import java.net.*;
+import java.util.Scanner;
+
+/**
+ * Client: Sends array and receives reversed array
+ */
+class ClientReverseArray {
+    public static void main(String[] args) {
+        try {
+            Socket socket = new Socket("127.0.0.1", 8080); // connect
+
+            ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream()); // send
+            ObjectInputStream in = new ObjectInputStream(socket.getInputStream()); // receive
+
+            Scanner scanner = new Scanner(System.in);
+
+            System.out.print("Enter array size: ");
+            int size = scanner.nextInt();
+
+            int[] arr = new int[size];
+
+            System.out.println("Enter elements:");
+            for (int i = 0; i < size; i++) {
+                arr[i] = scanner.nextInt();
+            }
+
+            out.writeInt(size); // send size
+
+            for (int i = 0; i < size; i++) {
+                out.writeInt(arr[i]); // send elements
+            }
+
+            out.flush();
+
+            // receive reversed array
+            int newSize = in.readInt();
+            int[] reversed = new int[newSize];
+
+            for (int i = 0; i < newSize; i++) {
+                reversed[i] = in.readInt();
+            }
+
+            // print result
+            System.out.print("Reversed array: ");
+            for (int num : reversed) {
+                System.out.print(num + " ");
+            }
+
+            socket.close();
+
+        } catch (IOException e) {
+            System.err.println(e.getMessage());
+        }
+    }
+}
