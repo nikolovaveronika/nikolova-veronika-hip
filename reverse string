@@ -1,0 +1,91 @@
+import java.io.*;
+import java.net.*;
+
+/**
+ * Server: Receives a string and returns it reversed
+ */
+class ServerReverse {
+    private static final int PORT = 8080;
+
+    public static void main(String[] args) {
+        String clientMessage;
+        String reversedMessage;
+
+        try {
+            ServerSocket serverSocket = new ServerSocket(PORT);
+            System.out.println("Server started on port " + PORT);
+            System.out.println("Waiting for clients...");
+
+            while (true) {
+                Socket connectionSocket = serverSocket.accept();
+                System.out.println("Client connected: " + connectionSocket.getInetAddress());
+
+                BufferedReader fromClient = new BufferedReader(
+                        new InputStreamReader(connectionSocket.getInputStream()));
+
+                DataOutputStream toClient = new DataOutputStream(
+                        connectionSocket.getOutputStream());
+
+                // Read message
+                clientMessage = fromClient.readLine();
+                System.out.println("Received: " + clientMessage);
+
+                // Reverse string
+                reversedMessage = new StringBuilder(clientMessage).reverse().toString() + '\n';
+
+                // Send back result
+                toClient.writeBytes(reversedMessage);
+                System.out.println("Sent: " + reversedMessage.trim());
+
+                connectionSocket.close();
+            }
+
+        } catch (IOException e) {
+            System.err.println("Error: " + e.getMessage());
+        }
+    }
+}
+
+//client
+
+import java.io.*;
+import java.net.*;
+
+/**
+ * Client: Sends string and receives reversed string
+ */
+class ClientReverse {
+    private static final String SERVER_IP = "127.0.0.1";
+    private static final int SERVER_PORT = 8080;
+
+    public static void main(String[] args) throws Exception {
+        String message;
+        String response;
+
+        BufferedReader userInput = new BufferedReader(
+                new InputStreamReader(System.in));
+
+        try {
+            Socket clientSocket = new Socket(SERVER_IP, SERVER_PORT);
+
+            DataOutputStream toServer = new DataOutputStream(
+                    clientSocket.getOutputStream());
+
+            BufferedReader fromServer = new BufferedReader(
+                    new InputStreamReader(clientSocket.getInputStream()));
+
+            System.out.print("Enter text: ");
+            message = userInput.readLine();
+
+            toServer.writeBytes(message + '\n');
+
+            response = fromServer.readLine();
+            System.out.println("Reversed: " + response);
+
+            clientSocket.close();
+
+        } catch (IOException e) {
+            System.err.println("Error: " + e.getMessage());
+        }
+    }
+}
