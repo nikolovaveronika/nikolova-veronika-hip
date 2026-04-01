@@ -1,0 +1,112 @@
+import java.io.*;              // for input/output streams
+import java.net.*;             // for ServerSocket and Socket
+import java.util.HashMap;      // for storing votes
+import java.util.Map;          // Map interface
+
+public class VotingServer {
+
+    public static void main(String[] args) {
+        int port = 9000; // server port
+
+        // Create map with voting options
+        Map<String, Integer> votes = new HashMap<>();
+        votes.put("Option A", 0);
+        votes.put("Option B", 0);
+        votes.put("Option C", 0);
+
+        try {
+            ServerSocket serverSocket = new ServerSocket(port);
+            System.out.println("Voting Server is running on port " + port);
+
+            while (true) { // server runs forever
+                Socket clientSocket = serverSocket.accept(); // wait for client
+                System.out.println("Client connected!");
+
+                // input/output streams
+                BufferedReader in = new BufferedReader(
+                        new InputStreamReader(clientSocket.getInputStream()));
+                PrintWriter out = new PrintWriter(
+                        clientSocket.getOutputStream(), true);
+
+                // send options to client
+                out.println("Available options:");
+                for (String option : votes.keySet()) {
+                    out.println(option);
+                }
+
+                // read client's vote
+                String vote = in.readLine();
+
+                // check if valid option
+                if (votes.containsKey(vote)) {
+                    votes.put(vote, votes.get(vote) + 1); // increment vote
+                    out.println("Vote cast successfully for " + vote);
+                } else {
+                    out.println("Invalid option!");
+                }
+
+                // display results on server console
+                System.out.println("Current vote counts:");
+                for (String option : votes.keySet()) {
+                    System.out.println(option + ": " + votes.get(option));
+                }
+
+                clientSocket.close(); // close connection
+            }
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+}
+
+//client
+
+import java.io.*;      // for input/output
+import java.net.*;     // for Socket
+import java.util.Scanner; // for user input
+
+public class VotingClient {
+
+    public static void main(String[] args) {
+        String host = "localhost";
+        int port = 9000;
+
+        try {
+            Socket socket = new Socket(host, port); // connect to server
+
+            BufferedReader in = new BufferedReader(
+                    new InputStreamReader(socket.getInputStream()));
+            PrintWriter out = new PrintWriter(
+                    socket.getOutputStream(), true);
+
+            Scanner scanner = new Scanner(System.in);
+
+            // read and display options from server
+            System.out.println("Options from server:");
+            String line;
+
+            // read 3 options (since we know there are 3)
+            for (int i = 0; i < 4; i++) { // includes "Available options:"
+                line = in.readLine();
+                System.out.println(line);
+            }
+
+            // ask user for vote
+            System.out.print("Enter your vote: ");
+            String vote = scanner.nextLine();
+
+            // send vote to server
+            out.println(vote);
+
+            // read confirmation
+            String response = in.readLine();
+            System.out.println("Server: " + response);
+
+            socket.close();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+}
