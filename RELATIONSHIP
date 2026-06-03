@@ -1,0 +1,46 @@
+////////MANY2ONE
+//Student (Owning side)
+
+@ManyToOne
+@JoinColumn(name = "department_id")
+private Department department;
+
+//Department (NO reverse side required)
+
+///////ONE2MANY
+//Department (INVERSE side)
+
+@OneToMany(mappedBy = "department")
+private List<Student> students = new ArrayList<>();
+
+
+//Student
+@ManyToOne
+@JoinColumn(name = "department_id")
+private Department department;
+
+/////////ONE TO ONE
+
+//Owning side (Student)
+@OneToOne
+@JoinColumn(name = "idcard_id")
+private IDCard idCard;
+
+//Inverse side (IDCard)
+@OneToOne(mappedBy = "idCard")
+private Student student;
+
+//////MANY2MANY
+
+//Student (owning side)
+@ManyToMany
+@JoinTable(
+        name = "student_course",
+        joinColumns = @JoinColumn(name = "student_id"),
+        inverseJoinColumns = @JoinColumn(name = "course_id")
+)
+private Set<Course> courses = new HashSet<>();
+
+//Course (inverse side)
+@ManyToMany(mappedBy = "courses")
+private Set<Student> students = new HashSet<>();

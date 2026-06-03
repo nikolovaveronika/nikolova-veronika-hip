@@ -1,8 +1,0 @@
-//Student (Owning side)
-
-@ManyToOne
-@JoinColumn(name = "department_id")
-private Department department;
-
-//Department (NO reverse side required)
-
